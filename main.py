@@ -1,44 +1,19 @@
 from fastapi import FastAPI, HTTPException
-import json
-import os
 import httpx
 import urllib.parse
 
 app = FastAPI()
 
-# تابع برای خواندن دیتابیس محلی
-def load_songs():
-    if os.path.exists("songs.json"):
-        try:
-            with open("songs.json", "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            return {}
-    return {}
-
 @app.get("/")
 def home():
-    return {"status": "Namira Hybrid Music Server is active!"}
+    return {"status": "Namira Clean Music Server is active!"}
 
 @app.get("/search")
 async def search_music(q: str):
     if not q:
         raise HTTPException(status_code=400, detail="Query parameter 'q' is required")
     
-    query_lower = q.lower().strip()
-    songs_db = load_songs()
-    
-    # مرحله اول: جستجو در فایل محلی songs.json برای تطابق‌های دقیق یا کلیدواژه‌ها
-    for key, track in songs_db.items():
-        if key in query_lower:
-            return {
-                "url": track["url"],
-                "title": track["title"],
-                "query": q,
-                "http_headers": {"User-Agent": "Mozilla/5.0"}
-            }
-    
-    # مرحله دوم: اگر در فایل محلی نبود، استفاده از iTunes API برای جستجوی آزاد و بدون خطا روی رندر
+    # جستجوی دقیقاً همون چیزی که کاربر سرچ کرده در آرشیو جهانی
     encoded_query = urllib.parse.quote(q)
     api_url = f"https://itunes.apple.com/search?term={encoded_query}&entity=song&limit=1"
     
@@ -62,11 +37,12 @@ async def search_music(q: str):
                     if preview_url:
                         return {
                             "url": preview_url,
-                    "title": f"{track_name} - {artist_name}",
+                            "title": f"{track_name} - {artist_name}",
                             "query": q,
                             "http_headers": {"User-Agent": "Mozilla/5.0"}
                         }
             
+            # اگر پیدا نشد، هیچ آهنگ فیکی نمی‌فرستیم و خطای تمیز 404 برمی‌گردانیم
             raise HTTPException(status_code=404, detail="موزیک مورد نظر یافت نشد.")
             
     except HTTPException as he:
