@@ -1,8 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import subprocess
-import json
+import requests
 import yt_dlp
 
 app = FastAPI()
@@ -21,39 +20,56 @@ class Item(BaseModel):
 @app.post("/")
 def extract_audio(item: Item):
     target_url = item.url.strip()
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
 
-    # پردازش اسپاتیفای با کتابخانه اوپن‌سورس spotdl
+    # ۱. اسپاتیفای (مستقیم با API بدون یوتیوب)
     if "spotify.com" in target_url:
+        # متد اول: FabDL
         try:
-            # دریافت متادیتا و لینک با spotdl
-            result = subprocess.run(
-                ["spotdl", "url", target_url],
-                capture_output=True,
-                text=True,
-                timeout=15
-            )
-            output = result.stdout.strip()
-            
-            # استخراج اطلاعات
-            if "http" in output:
-                lines = output.splitlines()
-                yt_url = [line for line in lines if "http" in line][0]
-                
-                # دریافت لینک مستقیم صوت از لینک یوتیوب استخراج شده
-                ydl_opts = {'format': 'bestaudio/best', 'quiet': True}
-                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    info = ydl.extract_info(yt_url, download=False)
+            res = requests.get(f"https://api.fabdl.com/spotify/get?url={target_url}", headers=headers, timeout=8).json()
+            if res.get("result"):
+                result = res["result"]
+                gid = result.get("gid")
+                id_val = result.get("id")
+                convert_res = requests.get(f"https://api.fabdl.com/spotify/mp3-convert-task/{gid}/{id_val}", headers=headers, timeout=8).json()
+                if convert_res.get("result") and convert_res["result"].get("download_url"):
                     return {
-                        "title": info.get('title', 'Spotify Track'),
-                        "author": info.get('uploader', 'Unknown Artist'),
-                        "audio_url": info.get('url', ''),
-                        "duration": str(info.get('duration', 0))
+                        "title": result.get("name", "Spotify Track"),
+                        "author": result.get("artists", "Unknown Artist"),
+                        "audio_url": f"https://api.fabdl.com{convert_res['result']['download_url']}",
+                        "duration": str(result.get("duration_ms", 0) // 1000)
                     }
-        except Exception as e:
-            return {"error": f"ارور spotdl: {str(e)}"}
+        except Exception:
+            pass
 
-    # پردازش ساوندکلاد
-    ydl_opts = {'format': 'bestaudio/best', 'quiet': True}
+        # متد دوم: Cobalt
+        try:
+            cobalt_res = requests.post(
+                "https://api.cobalt.tools/api/json",
+                json={"url": target_url, "downloadMode": "audio"},
+                headers={**headers, "Accept": "application/json"},
+                timeout=8
+            ).json()
+            if cobalt_res.get("url"):
+                return {
+                    "title": "Spotify Music",
+                    "author": "Spotify Artist",
+                    "audio_url": cobalt_res.get("url"),
+                    "duration": "180"
+                }
+        except Exception:
+            pass
+
+        return {"error": "امکان دریافت لینک اسپاتیفای وجود نداشت."}
+
+    # ۲. ساوندکلاد و سایر سایت‌ها (استخراج مستقیم بدون یوتیوب)
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'quiet': True,
+        'no_warnings': True,
+        'force_generic_extractor': False
+    }
+
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(target_url, download=False)
@@ -61,7 +77,7 @@ def extract_audio(item: Item):
                 info = info['entries'][0]
 
             return {
-                "title": info.get('title', 'Music Track'),
+                "title": info.get('title', 'SoundCloud Track'),
                 "author": info.get('uploader', 'Unknown Artist'),
                 "audio_url": info.get('url', ''),
                 "duration": str(info.get('duration', 0))
