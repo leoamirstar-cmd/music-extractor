@@ -17,7 +17,6 @@ app.add_middleware(
 class Item(BaseModel):
     url: str
 
-# پاسخ به مرورگر و هلث‌چک برای جلوگیری از ارور 405
 @app.get("/")
 def home():
     return {"status": "Server is running online!"}
@@ -25,44 +24,61 @@ def home():
 @app.post("/")
 def extract_audio(item: Item):
     target_url = item.url.strip()
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    }
 
-    # ۱. پردازش اختصاصی لینک‌های اسپاتیفای (مستقیم)
+    # ۱. پردازش اسپاتیفای با سرویس باکیفیت و مستقیم spotidownload
     if "spotify.com" in target_url:
         try:
-            # استفاده از API مستقیم spotifydown
-            res = requests.get(f"https://api.spotifydown.com/download/{target_url.split('/')[-1].split('?')[0]}", headers=headers, timeout=8).json()
-            if res.get("success") and res.get("link"):
+            # دریافت اطلاعات متادیتای ترک
+            info_res = requests.post(
+                "https://spotidownloader.com/api/get-metadata",
+                json={"url": target_url},
+                headers=headers,
+                timeout=10
+            )
+            if info_res.status_code == 200:
+                data = info_res.json()
+                download_res = requests.post(
+                    "https://spotidownloader.com/api/download-track",
+                    json={"url": target_url},
+                    headers=headers,
+                    timeout=12
+                )
+                if download_res.status_code == 200:
+                    dl_data = download_res.json()
+                    audio_link = dl_data.get("fileUrl") or dl_data.get("link") or dl_data.get("url")
+                    if audio_link:
+                        return {
+                            "title": data.get("title", "Spotify Track"),
+                            "author": data.get("artist", "Unknown Artist"),
+                            "audio_url": audio_link,
+                            "duration": str(data.get("duration", 180))
+                        }
+        except Exception:
+            pass
+
+        # متد پشتیبان مستقیم
+        try:
+            fallback_res = requests.get(
+                f"https://api.spotidown.app/download?url={target_url}",
+                headers=headers,
+                timeout=10
+            ).json()
+            if fallback_res.get("link"):
                 return {
-                    "title": res.get("metadata", {}).get("title", "Spotify Track"),
-                    "author": res.get("metadata", {}).get("artists", "Unknown Artist"),
-                    "audio_url": res.get("link"),
-                    "duration": "180"
+                    "title": fallback_res.get("title", "Spotify Track"),
+                    "author": fallback_res.get("artist", "Unknown Artist"),
+                    "audio_url": fallback_res.get("link"),
+                    "duration": str(fallback_res.get("duration", 0))
                 }
         except Exception:
             pass
 
-        try:
-            # سرویس پشتیبان FabDL
-            res = requests.get(f"https://api.fabdl.com/spotify/get?url={target_url}", headers=headers, timeout=8).json()
-            if res.get("result"):
-                result = res["result"]
-                gid = result.get("gid")
-                id_val = result.get("id")
-                convert_res = requests.get(f"https://api.fabdl.com/spotify/mp3-convert-task/{gid}/{id_val}", headers=headers, timeout=8).json()
-                if convert_res.get("result") and convert_res["result"].get("download_url"):
-                    return {
-                        "title": result.get("name", "Spotify Track"),
-                        "author": result.get("artists", "Unknown Artist"),
-                        "audio_url": f"https://api.fabdl.com{convert_res['result']['download_url']}",
-                        "duration": str(result.get("duration_ms", 0) // 1000)
-                    }
-        except Exception:
-            pass
+        return {"error": "امکان استخراج فایل صوتی اسپاتیفای وجود نداشت."}
 
-        return {"error": "امکان استخراج لینک اسپاتیفای وجود نداشت."}
-
-    # ۲. پردازش ساوندکلاد با yt_dlp
+    # ۲. پردازش ساوندکلاد و سایر سرویس‌ها با yt_dlp
     ydl_opts = {
         'format': 'bestaudio/best',
         'quiet': True,
