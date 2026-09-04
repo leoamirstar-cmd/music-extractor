@@ -1,6 +1,6 @@
+import os
 from fastapi import FastAPI, HTTPException
-import httpx
-import re
+import yt_dlp
 
 app = FastAPI()
 
@@ -13,27 +13,52 @@ async def search_music(q: str):
     if not q:
         raise HTTPException(status_code=400, detail="Query parameter 'q' is required")
     
-    # جستجو در منابع عمومی وب برای یافتن لینک مستقیم آهنگ
-    search_url = f"https://html.duckduckgo.com/html/?q={q}+دانلود+آهنگ+mp3+لینک+مستقیم"
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-    
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'noplaylist': True,
+        'quiet': True,
+        'extract_flat': False,
+    }
+
     try:
-        async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
-            response = await client.get(search_url, headers=headers)
-            if response.status_code == 200:
-                html = response.text
-                # پیدا کردن تمام لینک‌های مستقیم صوتی معتبر در صفحات وب
-                pattern = re.compile(r'href="(https?://[^"]+\.mp3[^"]*)"', re.IGNORECASE)
-                matches = pattern.findall(html)
-                
-                if matches:
-                    # فیلتر کردن لینک‌های نامعتبر یا تبلیغاتی
-                    for url in matches:
-                        if "download" in url or "dl" in url or "music" in url or "s1" in url or "s2" in url:
-                            return {"url": url, "title": q, "query": q}
-                    return {"url": matches[0], "title": q, "query": q}
-            
-            raise HTTPException(status_code=404, detail="لینک مستقیمی برای این آهنگ یافت نشد.")
-            
+        # جستجو در یوتیوب
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(f"ytsearch1:{q} audio", download=False)
+            if 'entries' in info and len(info['entries']) > 0:
+                entry = info['entries'][0]
+                audio_url = entry.get('url')
+                title = entry.get('title', q)
+                if audio_url:
+                    return {
+                        "url": audio_url,
+                        "title": title,
+                        "query": q,
+                        # ارسال User-Agent مورد نیاز به کلاینت برای جلوگیری از خطای دسترسی
+                        "http_headers": {
+                            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                        }
+                    }
+                    
+        # جستجو در ساوندکلاد به عنوان جایگزین
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(f"scsearch1:{q}", download=False)
+            if 'entries' in info and len(info['entries']) > 0:
+                entry = info['entries'][0]
+                audio_url = entry.get('url')
+                title = entry.get('title', q)
+                if audio_url:
+                    return {
+                        "url": audio_url,
+                        "title": title,
+                        "query": q,
+                        "http_headers": {
+                            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                        }
+                    }
+
+        raise HTTPException(status_code=404, detail="لینک مستقیمی برای این آهنگ یافت نشد.")
+
+    except HTTPException as he:
+        raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
