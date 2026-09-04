@@ -20,25 +20,32 @@ app.add_middleware(
 class Item(BaseModel):
     url: str
 
+# آدرس پراکسی خودت رو اینجا وارد کن (مثلاً پراکسی تلگرام یا V2Ray لوکال/سرویس دیگر)
+# فرمت: socks5://user:pass@host:port یا http://host:port
+PROXY_URL = os.getenv("PROXY_URL", "")
+
 @app.get("/")
 def home():
-    return {"status": "Server is running online!"}
+    return {"status": "Server is running with Proxy Support!"}
 
 @app.post("/")
 def extract_audio(item: Item):
     target_url = item.url.strip()
 
-    # پردازش اسپاتیفای با دستور اجرایی spotdl
+    # ۱. اسپاتیفای با spotdl و عبور از پراکسی برای دور زدن بلاک
     if "spotify.com" in target_url:
         try:
+            cmd = ["spotdl", target_url, "--output", "/tmp/"]
+            if PROXY_URL:
+                cmd.extend(["--proxy", PROXY_URL])
+
             subprocess.run(
-                ["spotdl", target_url, "--output", "/tmp/"],
+                cmd,
                 capture_output=True,
                 text=True,
-                timeout=35
+                timeout=40
             )
             
-            # پیدا کردن آخرین فایل MP3 دانلود شده
             files = glob.glob("/tmp/*.mp3")
             if files:
                 latest_file = max(files, key=os.path.getctime)
@@ -52,10 +59,13 @@ def extract_audio(item: Item):
                     "duration": "180"
                 }
         except Exception as e:
-            return {"error": f"خطا در spotdl: {str(e)}"}
+            return {"error": f"خطا با پراکسی: {str(e)}"}
 
-    # ساوندکلاد با yt_dlp
+    # ۲. ساوندکلاد با yt_dlp
     ydl_opts = {'format': 'bestaudio/best', 'quiet': True}
+    if PROXY_URL:
+        ydl_opts['proxy'] = PROXY_URL
+
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(target_url, download=False)
@@ -69,7 +79,7 @@ def extract_audio(item: Item):
                 "duration": str(info.get('duration', 0))
             }
     except Exception as e:
-        return {"error": f"خطا در استخراج: {str(e)}"}
+        return {"error": str(e)}
 
 @app.get("/file/{filename}")
 def get_file(filename: str):
