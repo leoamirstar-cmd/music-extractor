@@ -1,17 +1,18 @@
 from fastapi import FastAPI, HTTPException
 import httpx
 
-app = FastAPI(title="Namira Music Engine", version="2.1")
+app = FastAPI(title="Namira Music Engine", version="2.2")
 
 @app.get("/")
 def read_root():
     return {
         "status": "Namira Music Engine is fully operational!",
-        "version": "2.1"
+        "version": "2.2"
     }
 
 @app.get("/search")
-async def search_music(q: str):
+@app.get("/search/")
+async def search_music(q: str = ""):
     if not q.strip():
         raise HTTPException(status_code=400, detail="Query parameter 'q' cannot be empty")
     
