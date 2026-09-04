@@ -1,88 +1,75 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 import requests
 import yt_dlp
-import os
-import glob
-import uuid
+import re
 
 app = FastAPI()
 
-@app.get("/")
-def home():
-    return {"status": "ok", "message": "Music Extractor Engine is Running!"}
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-@app.get("/extract")
-def extract_audio(url: str):
-    unique_id = str(uuid.uuid4())[:8]
-    output_template = f"/tmp/song_{unique_id}.%(ext)s"
+class Item(BaseModel):
+    url: str
 
-    # اگر لینک اسپاتیفای باشد
-    if "spotify.com" in url:
-        try:
-            # دریافت مستقیم اطلاعات و لینک از API واسط اسپاتیفای
-            api_res = requests.get(f"https://api.v2.spotidown.app/download?url={url}", timeout=10)
-            if api_res.status_code == 200:
-                data = api_res.json()
-                download_link = data.get("link")
-                title = data.get("title", "Spotify Track")
-                artist = data.get("artist", "Unknown Artist")
+def fetch_spotify_metadata(url: str):
+    """استخراج عنوان و خواننده از متا تگ‌های اسپاتیفای بدون نیاز به API Key"""
+    try:
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+        res = requests.get(url, headers=headers, timeout=5)
+        if res.status_code == 200:
+            title_match = re.search(r'<title>(.*?)</title>', res.text)
+            if title_match:
+                raw_title = title_match.group(1)
+                clean_title = raw_title.split('|')[0].replace(' - song and lyrics by ', ' ').replace(' - song by ', ' ').strip()
+                return clean_title
+    except Exception:
+        pass
+    return None
 
-                if download_link:
-                    # دانلود مستقیم فایل صوتی
-                    audio_res = requests.get(download_link, timeout=30)
-                    file_path = f"/tmp/song_{unique_id}.mp3"
-                    with open(file_path, "wb") as f:
-                        f.write(audio_res.content)
+@app.post("/")
+def extract_audio(item: Item):
+    target_url = item.url.strip()
+    spotify_title = None
 
-                    return {
-                        "status": "success",
-                        "title": title,
-                        "artist": artist,
-                        "download_url": f"/download/song_{unique_id}.mp3"
-                    }
-        except Exception:
-            pass
+    # اگر لینک اسپاتیفای بود، نام ترک رو در می‌اریم و توی یوتیوب سرچ می‌کنیم
+    if "spotify.com" in target_url:
+        spotify_title = fetch_spotify_metadata(target_url)
+        if spotify_title:
+            target_url = f"ytsearch1:{spotify_title}"
+        else:
+            target_url = f"ytsearch1:{target_url}"
 
-    # برای ساوندکلاد و سایر پلتفرم‌ها
     ydl_opts = {
         'format': 'bestaudio/best',
-        'outtmpl': output_template,
-        'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3',
-            'preferredquality': '192',
-        }],
         'quiet': True,
         'no_warnings': True,
+        'default_search': 'ytsearch',
     }
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            title = info.get('title', 'Unknown Title')
-            artist = info.get('uploader', 'Unknown Artist')
+            info = ydl.extract_info(target_url, download=False)
+            
+            if 'entries' in info and len(info['entries']) > 0:
+                info = info['entries'][0]
 
-        matching_files = glob.glob(f"/tmp/song_{unique_id}.*")
-        if not matching_files:
-            raise HTTPException(status_code=500, detail="File download failed")
+            title = spotify_title if spotify_title else info.get('title', 'Music Track')
+            uploader = info.get('uploader', 'Unknown Artist')
+            audio_url = info.get('url', '')
+            duration = str(info.get('duration', 0))
 
-        downloaded_file = matching_files[0]
-        filename = os.path.basename(downloaded_file)
-
-        return {
-            "status": "success",
-            "title": title,
-            "artist": artist,
-            "download_url": f"/download/{filename}"
-        }
-
+            return {
+                "title": title,
+                "author": uploader,
+                "audio_url": audio_url,
+                "duration": duration
+            }
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-@app.get("/download/{filename}")
-def download_file(filename: str):
-    file_path = f"/tmp/{filename}"
-    if os.path.exists(file_path):
-        return FileResponse(path=file_path, media_type='audio/mpeg', filename=filename)
-    raise HTTPException(status_code=404, detail="File not found")
+        return {"error": f"خطا در استخراج: {str(e)}"}
