@@ -50,3 +50,4 @@ async def search_music(q: str):
         raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+        
