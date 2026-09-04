@@ -1,35 +1,35 @@
 from fastapi import FastAPI, HTTPException
+import json
+import os
+import httpx
+import urllib.parse
 
 app = FastAPI()
 
-# بانک اطلاعاتی کوچک و کاملاً پایدار برای جلوگیری از هرگونه خطای اسکرپ و 500
-MUSIC_DB = {
-    "ساقی": {
-        "url": "https://dl.next1music.ir/dl/musics/1398/08/Hayedeh%20-%20Saghi%20(128).mp3",
-        "title": "ساقی - هایده"
-    },
-    "هایده": {
-        "url": "https://dl.next1music.ir/dl/musics/1398/08/Hayedeh%20-%20Saghi%20(128).mp3",
-        "title": "ساقی - هایده"
-    },
-    "محسن یگانه": {
-        "url": "https://dl.music-fa.com/tagdl/downloads/Mohsen%2520Yeganeh%2520-%2520Behet%2520Gol%2520Midam%2520(128).mp3",
-        "title": "بهت قول میدم - محسن یگانه"
-    }
-}
+# تابع برای خواندن دیتابیس محلی
+def load_songs():
+    if os.path.exists("songs.json"):
+        try:
+            with open("songs.json", "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return {}
+    return {}
 
 @app.get("/")
 def home():
-    return {"status": "Namira Music Server is active!"}
+    return {"status": "Namira Hybrid Music Server is active!"}
 
 @app.get("/search")
 async def search_music(q: str):
     if not q:
         raise HTTPException(status_code=400, detail="Query parameter 'q' is required")
     
-    # جستجوی هوشمند در دیکشنری داخلی بدون نیاز به اینترنت و سایت‌های خارجی
-    query_lower = q.lower()
-    for key, track in MUSIC_DB.items():
+    query_lower = q.lower().strip()
+    songs_db = load_songs()
+    
+    # مرحله اول: جستجو در فایل محلی songs.json برای تطابق‌های دقیق یا کلیدواژه‌ها
+    for key, track in songs_db.items():
         if key in query_lower:
             return {
                 "url": track["url"],
@@ -38,10 +38,39 @@ async def search_music(q: str):
                 "http_headers": {"User-Agent": "Mozilla/5.0"}
             }
     
-    # اگر موردی پیدا نشد، یک موزیک واقعیِ عمومی برمی‌گردانیم تا ارور 500 ندهد
-    return {
-        "url": "https://dl.next1music.ir/dl/musics/1398/08/Hayedeh%20-%20Saghi%20(128).mp3",
-        "title": f"نتیجه جستجو: {q}",
-        "query": q,
-        "http_headers": {"User-Agent": "Mozilla/5.0"}
+    # مرحله دوم: اگر در فایل محلی نبود، استفاده از iTunes API برای جستجوی آزاد و بدون خطا روی رندر
+    encoded_query = urllib.parse.quote(q)
+    api_url = f"https://itunes.apple.com/search?term={encoded_query}&entity=song&limit=1"
+    
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
     }
+    
+    try:
+        async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
+            response = await client.get(api_url, headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                results = data.get("results", [])
+                
+                if results:
+                    track = results[0]
+                    preview_url = track.get("previewUrl")
+                    track_name = track.get("trackName", q)
+                    artist_name = track.get("artistName", "")
+                    
+                    if preview_url:
+                        return {
+                            "url": preview_url,
+                    "title": f"{track_name} - {artist_name}",
+                            "query": q,
+                            "http_headers": {"User-Agent": "Mozilla/5.0"}
+                        }
+            
+            raise HTTPException(status_code=404, detail="موزیک مورد نظر یافت نشد.")
+            
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+        
