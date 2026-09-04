@@ -2,10 +2,12 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-import subprocess
 import glob
 import os
 import yt_dlp
+
+# ایمپورت کردن ماژول‌های استاندارد خود spotdl که توی کدهات دیدیم
+from spotdl import Spotdl
 
 app = FastAPI()
 
@@ -22,46 +24,56 @@ class Item(BaseModel):
 
 @app.get("/")
 def home():
-    return {"status": "Server is running!"}
+    return {"status": "Spotify & SoundCloud Bridge is running!"}
 
 @app.post("/")
 def extract_audio(item: Item):
     target_url = item.url.strip()
 
+    # ۱. پردازش لینک‌های اسپاتیفای با استفاده مستقیم از کلاس Spotdl و اجبار به استفاده از ساندکلاد
     if "spotify.com" in target_url:
         try:
-            # اجرای spotdl و گرفتن دقیق خروجی خطا (stderr)
-            result = subprocess.run(
-                ["spotdl", target_url, "--output", "/tmp/"],
-                capture_output=True,
-                text=True,
-                timeout=45
+            # ایجاد نمونه از Spotdl با تنظیمات اجبار به ساندکلاد برای دور زدن بلاک یوتیوب روی Render
+            spotdl_instance = Spotdl(
+                client_id=None,
+                client_secret=None,
+                downloader_settings={
+                    "audio_providers": ["soundcloud"],
+                    "output": "/tmp/{track-name}.{output-ext}"
+                }
             )
             
-            # اگر خطایی رخ داد، متن دقیقش رو برمی‌گردونیم تا ببینیم داستان چیه
-            if result.returncode != 0:
-                error_msg = result.stderr.strip() or result.stdout.strip()
-                return {"error": f"Spotdl Failed: {error_msg}"}
+            # جستجوی آهنگ
+            songs = spotdl_instance.search([target_url])
+            if not songs:
+                return {"error": "آهنگ مورد نظر در اسپاتیفای پیدا نشد."}
             
-            files = glob.glob("/tmp/*.mp3")
-            if files:
-                latest_file = max(files, key=os.path.getctime)
-                filename = os.path.basename(latest_file)
-                song_name = filename.replace(".mp3", "").replace("_", " ")
+            # دانلود آهنگ به پوشه /tmp/
+            downloaded_songs = spotdl_instance.download_songs(songs)
+            
+            if downloaded_songs and downloaded_songs[0][1]:
+                file_path = downloaded_songs[0][1]
+                filename = os.path.basename(file_path)
+                song_obj = downloaded_songs[0][0]
                 
                 return {
-                    "title": song_name,
-                    "author": "Spotify Artist",
+                    "title": song_obj.name,
+                    "author": ", ".join(song_obj.artists),
                     "audio_url": f"https://music-extractor.onrender.com/file/{filename}",
-                    "duration": "180"
+                    "duration": str(int(song_obj.duration or 180))
                 }
-            return {"error": "فایل MP3 توسط spotdl ایجاد نشد"}
+            
+            return {"error": "خطا در دانلود فایل صوتی از طریق پل ساندکلاد."}
             
         except Exception as e:
-            return {"error": f"Exception: {str(e)}"}
+            return {"error": f"Spotdl Exception: {str(e)}"}
 
-    # ساوندکلاد مثل قبل بدون مشکل با yt_dlp کار می‌کنه
-    ydl_opts = {'format': 'bestaudio/best', 'quiet': True}
+    # ۲. پردازش لینک‌های ساوندکلاد مستقیم با yt_dlp
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'quiet': True,
+        'no_warnings': True,
+    }
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(target_url, download=False)
@@ -72,10 +84,10 @@ def extract_audio(item: Item):
                 "title": info.get('title', 'Music Track'),
                 "author": info.get('uploader', 'Unknown Artist'),
                 "audio_url": info.get('url', ''),
-                "duration": str(info.get('duration', 0))
+                "duration": str(int(info.get('duration', 0)))
             }
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": f"SoundCloud Error: {str(e)}"}
 
 @app.get("/file/{filename}")
 def get_file(filename: str):
