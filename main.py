@@ -1,55 +1,46 @@
 from fastapi import FastAPI, HTTPException
 import httpx
-import urllib.parse
 
-app = FastAPI()
+app = FastAPI(title="Namira Music Engine", version="2.1")
 
 @app.get("/")
-def home():
-    return {"status": "Namira Music Engine is fully operational!", "version": "2.1"}
+def read_root():
+    return {
+        "status": "Namira Music Engine is fully operational!",
+        "version": "2.1"
+    }
 
 @app.get("/search")
-@app.get("/search/")
 async def search_music(q: str):
-    if not q:
-        raise HTTPException(status_code=400, detail="Query parameter 'q' is required")
+    if not q.strip():
+        raise HTTPException(status_code=400, detail="Query parameter 'q' cannot be empty")
     
-    clean_query = q.strip()
-    api_url = f"https://api.deezer.com/search?q={urllib.parse.quote(clean_query)}"
-    
-    try:
-        async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
-            response = await client.get(api_url)
+    deezer_url = f"https://api.deezer.com/search?q={q}"
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(deezer_url)
+            data = response.json()
             
-            if response.status_code == 200:
-                data = response.json()
-                tracks = data.get("data", [])
-                
-                if tracks:
-                    track = tracks[0]
-                    preview_url = track.get("preview")
-                    track_title = track.get("title", clean_query)
-                    artist_name = track.get("artist", {}).get("name", "نامیرا موزیک")
-                    duration_sec = track.get("duration", 30)
-                    
-                    # تبدیل ثانیه به فرمت mm:ss
-                    mins = duration_sec // 60
-                    secs = duration_sec % 60
-                    formatted_duration = f"{mins:02d}:{secs:02d}"
-                    
-                    if preview_url:
-                        return {
-                            "url": preview_url,
-                            "title": track_title,
-                            "author": artist_name,
-                            "duration": formatted_duration,
-                            "query": clean_query
-                        }
+            tracks = data.get("data", [])
+            if not tracks:
+                raise HTTPException(status_code=404, detail="آهنگی یافت نشد.")
             
-            raise HTTPException(status_code=404, detail="موزیک مورد نظر یافت نشد.")
+            track = tracks[0]
+            duration_sec = track.get("duration", 30)
+            mins = duration_sec // 60
+            secs = duration_sec % 60
+            formatted_duration = f"{mins:02d}:{secs:02d}"
             
-    except HTTPException as he:
-        raise he
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"خطای داخلی سرور: {str(e)}")
-        
+            return {
+                "url": track.get("preview"),
+                "title": track.get("title"),
+                "author": track.get("artist", {}).get("name"),
+                "duration": formatted_duration,
+                "query": q
+            }
+        except httpx.RequestError:
+            raise HTTPException(status_code=500, detail="خطا در ارتباط با موتور جستجو")
+        except Exception as e:
+            print(f"Search error: {e}")
+            raise HTTPException(status_code=500, detail="خطای داخلی سرور")
+            
