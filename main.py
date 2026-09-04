@@ -17,15 +17,33 @@ app.add_middleware(
 class Item(BaseModel):
     url: str
 
+# پاسخ به مرورگر و هلث‌چک برای جلوگیری از ارور 405
+@app.get("/")
+def home():
+    return {"status": "Server is running online!"}
+
 @app.post("/")
 def extract_audio(item: Item):
     target_url = item.url.strip()
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
 
-    # ۱. اسپاتیفای (مستقیم با API بدون یوتیوب)
+    # ۱. پردازش اختصاصی لینک‌های اسپاتیفای (مستقیم)
     if "spotify.com" in target_url:
-        # متد اول: FabDL
         try:
+            # استفاده از API مستقیم spotifydown
+            res = requests.get(f"https://api.spotifydown.com/download/{target_url.split('/')[-1].split('?')[0]}", headers=headers, timeout=8).json()
+            if res.get("success") and res.get("link"):
+                return {
+                    "title": res.get("metadata", {}).get("title", "Spotify Track"),
+                    "author": res.get("metadata", {}).get("artists", "Unknown Artist"),
+                    "audio_url": res.get("link"),
+                    "duration": "180"
+                }
+        except Exception:
+            pass
+
+        try:
+            # سرویس پشتیبان FabDL
             res = requests.get(f"https://api.fabdl.com/spotify/get?url={target_url}", headers=headers, timeout=8).json()
             if res.get("result"):
                 result = res["result"]
@@ -42,32 +60,13 @@ def extract_audio(item: Item):
         except Exception:
             pass
 
-        # متد دوم: Cobalt
-        try:
-            cobalt_res = requests.post(
-                "https://api.cobalt.tools/api/json",
-                json={"url": target_url, "downloadMode": "audio"},
-                headers={**headers, "Accept": "application/json"},
-                timeout=8
-            ).json()
-            if cobalt_res.get("url"):
-                return {
-                    "title": "Spotify Music",
-                    "author": "Spotify Artist",
-                    "audio_url": cobalt_res.get("url"),
-                    "duration": "180"
-                }
-        except Exception:
-            pass
+        return {"error": "امکان استخراج لینک اسپاتیفای وجود نداشت."}
 
-        return {"error": "امکان دریافت لینک اسپاتیفای وجود نداشت."}
-
-    # ۲. ساوندکلاد و سایر سایت‌ها (استخراج مستقیم بدون یوتیوب)
+    # ۲. پردازش ساوندکلاد با yt_dlp
     ydl_opts = {
         'format': 'bestaudio/best',
         'quiet': True,
         'no_warnings': True,
-        'force_generic_extractor': False
     }
 
     try:
@@ -77,7 +76,7 @@ def extract_audio(item: Item):
                 info = info['entries'][0]
 
             return {
-                "title": info.get('title', 'SoundCloud Track'),
+                "title": info.get('title', 'Music Track'),
                 "author": info.get('uploader', 'Unknown Artist'),
                 "audio_url": info.get('url', ''),
                 "duration": str(info.get('duration', 0))
