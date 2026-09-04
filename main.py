@@ -20,8 +20,7 @@ app.add_middleware(
 class Item(BaseModel):
     url: str
 
-# آدرس پراکسی خودت رو اینجا وارد کن (مثلاً پراکسی تلگرام یا V2Ray لوکال/سرویس دیگر)
-# فرمت: socks5://user:pass@host:port یا http://host:port
+# دریافت آدرس پراکسی از متغیر محیطی Render (مثلا socks5://127.0.0.1:1080)
 PROXY_URL = os.getenv("PROXY_URL", "")
 
 @app.get("/")
@@ -32,7 +31,7 @@ def home():
 def extract_audio(item: Item):
     target_url = item.url.strip()
 
-    # ۱. اسپاتیفای با spotdl و عبور از پراکسی برای دور زدن بلاک
+    # ۱. پردازش لینک‌های اسپاتیفای با spotdl و اعمال پراکسی
     if "spotify.com" in target_url:
         try:
             cmd = ["spotdl", target_url, "--output", "/tmp/"]
@@ -43,9 +42,10 @@ def extract_audio(item: Item):
                 cmd,
                 capture_output=True,
                 text=True,
-                timeout=40
+                timeout=45
             )
             
+            # جستجوی فایل خروجی MP3
             files = glob.glob("/tmp/*.mp3")
             if files:
                 latest_file = max(files, key=os.path.getctime)
@@ -59,9 +59,11 @@ def extract_audio(item: Item):
                     "duration": "180"
                 }
         except Exception as e:
-            return {"error": f"خطا با پراکسی: {str(e)}"}
+            return {"error": f"خطا در spotdl: {str(e)}"}
 
-    # ۲. ساوندکلاد با yt_dlp
+        return {"error": "خطا در دریافت فایل از اسپاتیفای"}
+
+    # ۲. پردازش لینک‌های ساوندکلاد با yt_dlp
     ydl_opts = {'format': 'bestaudio/best', 'quiet': True}
     if PROXY_URL:
         ydl_opts['proxy'] = PROXY_URL
@@ -79,7 +81,7 @@ def extract_audio(item: Item):
                 "duration": str(info.get('duration', 0))
             }
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": f"خطا در استخراج ساوندکلاد: {str(e)}"}
 
 @app.get("/file/{filename}")
 def get_file(filename: str):
@@ -87,3 +89,4 @@ def get_file(filename: str):
     if os.path.exists(file_path):
         return FileResponse(file_path, media_type="audio/mpeg", filename=filename)
     raise HTTPException(status_code=404, detail="File not found")
+    
