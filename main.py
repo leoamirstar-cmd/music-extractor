@@ -20,32 +20,29 @@ app.add_middleware(
 class Item(BaseModel):
     url: str
 
-# دریافت آدرس پراکسی از متغیر محیطی Render (مثلا socks5://127.0.0.1:1080)
-PROXY_URL = os.getenv("PROXY_URL", "")
-
 @app.get("/")
 def home():
-    return {"status": "Server is running with Proxy Support!"}
+    return {"status": "Server is running!"}
 
 @app.post("/")
 def extract_audio(item: Item):
     target_url = item.url.strip()
 
-    # ۱. پردازش لینک‌های اسپاتیفای با spotdl و اعمال پراکسی
     if "spotify.com" in target_url:
         try:
-            cmd = ["spotdl", target_url, "--output", "/tmp/"]
-            if PROXY_URL:
-                cmd.extend(["--proxy", PROXY_URL])
-
-            subprocess.run(
-                cmd,
+            # اجرای spotdl و گرفتن دقیق خروجی خطا (stderr)
+            result = subprocess.run(
+                ["spotdl", target_url, "--output", "/tmp/"],
                 capture_output=True,
                 text=True,
                 timeout=45
             )
             
-            # جستجوی فایل خروجی MP3
+            # اگر خطایی رخ داد، متن دقیقش رو برمی‌گردونیم تا ببینیم داستان چیه
+            if result.returncode != 0:
+                error_msg = result.stderr.strip() or result.stdout.strip()
+                return {"error": f"Spotdl Failed: {error_msg}"}
+            
             files = glob.glob("/tmp/*.mp3")
             if files:
                 latest_file = max(files, key=os.path.getctime)
@@ -58,16 +55,13 @@ def extract_audio(item: Item):
                     "audio_url": f"https://music-extractor.onrender.com/file/{filename}",
                     "duration": "180"
                 }
+            return {"error": "فایل MP3 توسط spotdl ایجاد نشد"}
+            
         except Exception as e:
-            return {"error": f"خطا در spotdl: {str(e)}"}
+            return {"error": f"Exception: {str(e)}"}
 
-        return {"error": "خطا در دریافت فایل از اسپاتیفای"}
-
-    # ۲. پردازش لینک‌های ساوندکلاد با yt_dlp
+    # ساوندکلاد مثل قبل بدون مشکل با yt_dlp کار می‌کنه
     ydl_opts = {'format': 'bestaudio/best', 'quiet': True}
-    if PROXY_URL:
-        ydl_opts['proxy'] = PROXY_URL
-
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(target_url, download=False)
@@ -81,7 +75,7 @@ def extract_audio(item: Item):
                 "duration": str(info.get('duration', 0))
             }
     except Exception as e:
-        return {"error": f"خطا در استخراج ساوندکلاد: {str(e)}"}
+        return {"error": str(e)}
 
 @app.get("/file/{filename}")
 def get_file(filename: str):
@@ -89,4 +83,3 @@ def get_file(filename: str):
     if os.path.exists(file_path):
         return FileResponse(file_path, media_type="audio/mpeg", filename=filename)
     raise HTTPException(status_code=404, detail="File not found")
-    
