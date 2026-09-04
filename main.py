@@ -1,29 +1,12 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
-import yt_dlp
 import requests
-import re
+import yt_dlp
 import os
 import glob
 import uuid
 
 app = FastAPI()
-
-def get_spotify_info(url: str):
-    try:
-        # دریافت HTML صفحه اسپاتیفای برای استخراج عنوان و خواننده
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
-        res = requests.get(url, headers=headers, timeout=5)
-        if res.status_code == 200:
-            title_match = re.search(r'<title>(.*?)</title>', res.text)
-            if title_match:
-                title_text = title_match.group(1)
-                # حذف عبارت‌های اضافه‌ای مثل Spotify از عنوان
-                clean_title = title_text.split('|')[0].replace(' - song and lyrics by ', ' ').replace(' | Spotify', '').strip()
-                return clean_title
-    except Exception:
-        pass
-    return None
 
 @app.get("/")
 def home():
@@ -33,18 +16,35 @@ def home():
 def extract_audio(url: str):
     unique_id = str(uuid.uuid4())[:8]
     output_template = f"/tmp/song_{unique_id}.%(ext)s"
-    
-    search_target = url
-    spotify_title = None
 
-    # اگر لینک اسپاتیفای بود
+    # اگر لینک اسپاتیفای باشد
     if "spotify.com" in url:
-        spotify_title = get_spotify_info(url)
-        if spotify_title:
-            search_target = f"ytsearch1:{spotify_title}"
-        else:
-            search_target = f"ytsearch1:{url}"
+        try:
+            # دریافت مستقیم اطلاعات و لینک از API واسط اسپاتیفای
+            api_res = requests.get(f"https://api.v2.spotidown.app/download?url={url}", timeout=10)
+            if api_res.status_code == 200:
+                data = api_res.json()
+                download_link = data.get("link")
+                title = data.get("title", "Spotify Track")
+                artist = data.get("artist", "Unknown Artist")
 
+                if download_link:
+                    # دانلود مستقیم فایل صوتی
+                    audio_res = requests.get(download_link, timeout=30)
+                    file_path = f"/tmp/song_{unique_id}.mp3"
+                    with open(file_path, "wb") as f:
+                        f.write(audio_res.content)
+
+                    return {
+                        "status": "success",
+                        "title": title,
+                        "artist": artist,
+                        "download_url": f"/download/song_{unique_id}.mp3"
+                    }
+        except Exception:
+            pass
+
+    # برای ساوندکلاد و سایر پلتفرم‌ها
     ydl_opts = {
         'format': 'bestaudio/best',
         'outtmpl': output_template,
@@ -55,23 +55,13 @@ def extract_audio(url: str):
         }],
         'quiet': True,
         'no_warnings': True,
-        'default_search': 'ytsearch',
     }
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(search_target, download=True)
-            
-            if 'entries' in info and len(info['entries']) > 0:
-                video_info = info['entries'][0]
-            else:
-                video_info = info
-                
-            title = video_info.get('title', 'Unknown Title')
-            artist = video_info.get('uploader', 'Unknown Artist')
-
-            if spotify_title:
-                title = spotify_title
+            info = ydl.extract_info(url, download=True)
+            title = info.get('title', 'Unknown Title')
+            artist = info.get('uploader', 'Unknown Artist')
 
         matching_files = glob.glob(f"/tmp/song_{unique_id}.*")
         if not matching_files:
