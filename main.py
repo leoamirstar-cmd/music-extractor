@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import requests
+import subprocess
+import json
 import yt_dlp
 
 app = FastAPI()
@@ -21,53 +22,38 @@ class Item(BaseModel):
 def extract_audio(item: Item):
     target_url = item.url.strip()
 
-    # ۱. پردازش لینک‌های اسپاتیفای
+    # پردازش اسپاتیفای با کتابخانه اوپن‌سورس spotdl
     if "spotify.com" in target_url:
         try:
-            api_url = f"https://spotify-downloader9.p.rapidapi.com/downloadSong?songId={target_url}"
-            # استفاده از API عمومی و مستقیم spotidown
-            res = requests.get(f"https://spotidown.app/api/download-track?url={target_url}", headers={
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }, timeout=10)
+            # دریافت متادیتا و لینک با spotdl
+            result = subprocess.run(
+                ["spotdl", "url", target_url],
+                capture_output=True,
+                text=True,
+                timeout=15
+            )
+            output = result.stdout.strip()
             
-            if res.status_code == 200:
-                data = res.json()
-                if data.get("url") or data.get("link"):
-                    return {
-                        "title": data.get("title") or data.get("name") or "Spotify Track",
-                        "author": data.get("artist") or data.get("artists") or "Spotify Artist",
-                        "audio_url": data.get("url") or data.get("link"),
-                        "duration": str(data.get("duration", "0"))
-                    }
-        except Exception:
-            pass
-
-        # متد دوم پشتیبان برای اسپاتیفای
-        try:
-            res2 = requests.get(f"https://api.fabdl.com/spotify/get?url={target_url}", timeout=10).json()
-            if res2.get("result"):
-                result = res2["result"]
-                gid = result.get("gid")
-                id_val = result.get("id")
+            # استخراج اطلاعات
+            if "http" in output:
+                lines = output.splitlines()
+                yt_url = [line for line in lines if "http" in line][0]
                 
-                convert_res = requests.get(f"https://api.fabdl.com/spotify/mp3-convert-task/{gid}/{id_val}", timeout=10).json()
-                if convert_res.get("result") and convert_res["result"].get("download_url"):
+                # دریافت لینک مستقیم صوت از لینک یوتیوب استخراج شده
+                ydl_opts = {'format': 'bestaudio/best', 'quiet': True}
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    info = ydl.extract_info(yt_url, download=False)
                     return {
-                        "title": result.get("name", "Spotify Track"),
-                        "author": result.get("artists", "Unknown Artist"),
-                        "audio_url": f"https://api.fabdl.com{convert_res['result']['download_url']}",
-                        "duration": str(result.get("duration_ms", 0) // 1000)
+                        "title": info.get('title', 'Spotify Track'),
+                        "author": info.get('uploader', 'Unknown Artist'),
+                        "audio_url": info.get('url', ''),
+                        "duration": str(info.get('duration', 0))
                     }
-        except Exception:
-            pass
+        except Exception as e:
+            return {"error": f"ارور spotdl: {str(e)}"}
 
-    # ۲. پردازش ساوندکلاد و سایر منابع با yt_dlp
-    ydl_opts = {
-        'format': 'bestaudio/best',
-        'quiet': True,
-        'no_warnings': True,
-    }
-
+    # پردازش ساوندکلاد
+    ydl_opts = {'format': 'bestaudio/best', 'quiet': True}
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(target_url, download=False)
