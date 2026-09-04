@@ -1,7 +1,10 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
-import requests
+import subprocess
+import glob
+import os
 import yt_dlp
 
 app = FastAPI()
@@ -24,67 +27,35 @@ def home():
 @app.post("/")
 def extract_audio(item: Item):
     target_url = item.url.strip()
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-    }
 
-    # ۱. پردازش اسپاتیفای با سرویس باکیفیت و مستقیم spotidownload
+    # پردازش اسپاتیفای با دستور اجرایی spotdl
     if "spotify.com" in target_url:
         try:
-            # دریافت اطلاعات متادیتای ترک
-            info_res = requests.post(
-                "https://spotidownloader.com/api/get-metadata",
-                json={"url": target_url},
-                headers=headers,
-                timeout=10
+            subprocess.run(
+                ["spotdl", target_url, "--output", "/tmp/"],
+                capture_output=True,
+                text=True,
+                timeout=35
             )
-            if info_res.status_code == 200:
-                data = info_res.json()
-                download_res = requests.post(
-                    "https://spotidownloader.com/api/download-track",
-                    json={"url": target_url},
-                    headers=headers,
-                    timeout=12
-                )
-                if download_res.status_code == 200:
-                    dl_data = download_res.json()
-                    audio_link = dl_data.get("fileUrl") or dl_data.get("link") or dl_data.get("url")
-                    if audio_link:
-                        return {
-                            "title": data.get("title", "Spotify Track"),
-                            "author": data.get("artist", "Unknown Artist"),
-                            "audio_url": audio_link,
-                            "duration": str(data.get("duration", 180))
-                        }
-        except Exception:
-            pass
-
-        # متد پشتیبان مستقیم
-        try:
-            fallback_res = requests.get(
-                f"https://api.spotidown.app/download?url={target_url}",
-                headers=headers,
-                timeout=10
-            ).json()
-            if fallback_res.get("link"):
+            
+            # پیدا کردن آخرین فایل MP3 دانلود شده
+            files = glob.glob("/tmp/*.mp3")
+            if files:
+                latest_file = max(files, key=os.path.getctime)
+                filename = os.path.basename(latest_file)
+                song_name = filename.replace(".mp3", "").replace("_", " ")
+                
                 return {
-                    "title": fallback_res.get("title", "Spotify Track"),
-                    "author": fallback_res.get("artist", "Unknown Artist"),
-                    "audio_url": fallback_res.get("link"),
-                    "duration": str(fallback_res.get("duration", 0))
+                    "title": song_name,
+                    "author": "Spotify Artist",
+                    "audio_url": f"https://music-extractor.onrender.com/file/{filename}",
+                    "duration": "180"
                 }
-        except Exception:
-            pass
+        except Exception as e:
+            return {"error": f"خطا در spotdl: {str(e)}"}
 
-        return {"error": "امکان استخراج فایل صوتی اسپاتیفای وجود نداشت."}
-
-    # ۲. پردازش ساوندکلاد و سایر سرویس‌ها با yt_dlp
-    ydl_opts = {
-        'format': 'bestaudio/best',
-        'quiet': True,
-        'no_warnings': True,
-    }
-
+    # ساوندکلاد با yt_dlp
+    ydl_opts = {'format': 'bestaudio/best', 'quiet': True}
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(target_url, download=False)
@@ -99,4 +70,10 @@ def extract_audio(item: Item):
             }
     except Exception as e:
         return {"error": f"خطا در استخراج: {str(e)}"}
-        
+
+@app.get("/file/{filename}")
+def get_file(filename: str):
+    file_path = f"/tmp/{filename}"
+    if os.path.exists(file_path):
+        return FileResponse(file_path, media_type="audio/mpeg", filename=filename)
+    raise HTTPException(status_code=404, detail="File not found")
