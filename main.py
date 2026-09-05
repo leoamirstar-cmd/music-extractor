@@ -3,7 +3,7 @@ import httpx
 
 app = FastAPI(title="Namira Music Engine", version="2.9")
 
-@app.get("/search")
+@app.get("/")
 def read_root():
     return {
         "status": "Namira Music Engine is fully operational!",
