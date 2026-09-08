@@ -1,215 +1,108 @@
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: 'Vazirmatn', sans-serif;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-}
-
-body {
-  background: #0B0E14;
-  color: #F8FAFC;
+/* استایل‌های تخته بازی نقطه و خط */
+.game-status {
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  min-height: 100vh;
-}
-
-.screen {
-  display: none;
-  width: 100%;
-  max-width: 400px;
-  padding: 16px;
-}
-
-.screen.active {
-  display: block;
-}
-
-/* پروفایل کاربر */
-.top-bar {
+  justify-content: space-between;
+  align-items: center;
   background: #161B22;
-  border: 1px solid #21262D;
-  padding: 10px 14px;
-  border-radius: 14px;
-  margin-bottom: 20px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  border: 1px solid #30363D;
+  margin-bottom: 25px;
 }
 
-.user-profile {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.avatar {
-  width: 38px;
-  height: 38px;
-  background: linear-gradient(135deg, #6366F1, #A855F7);
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 18px;
-}
-
-.user-info {
+.player-score {
   display: flex;
   flex-direction: column;
-  text-align: right;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 10px;
+  background: #21262D;
+  opacity: 0.6;
 }
 
-.username {
-  font-size: 14px;
-  font-weight: 700;
-  color: #F1F5F9;
+.player-score.active {
+  opacity: 1;
+  border: 1px solid #58A6FF;
 }
 
-.status {
+.player-score span {
   font-size: 11px;
   color: #8B949E;
 }
 
-.section-title {
-  font-family: 'Lalezar', cursive;
-  text-align: right;
-  font-size: 22px;
-  color: #58A6FF;
-  margin-bottom: 12px;
-  letter-spacing: 0.5px;
+.player-score strong {
+  font-size: 18px;
+  color: #FFF;
 }
 
-/* کارت بزرگ ویژه (مثل پلاتو) */
-.games-container {
+.turn-indicator {
+  font-size: 13px;
+  font-weight: bold;
+  color: #58A6FF;
+}
+
+/* تخته اصلی */
+#dots-board {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-}
-
-.featured-card {
-  background: #161B22;
-  border-radius: 20px;
-  overflow: hidden;
-  border: 1px solid #30363D;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  cursor: pointer;
-  transition: transform 0.2s ease, border-color 0.2s ease;
-}
-
-.featured-card:active {
-  transform: scale(0.97);
-  border-color: #58A6FF;
-}
-
-.card-banner {
-  height: 110px;
-  background: linear-gradient(135deg, #FF512F, #DD2476);
-  display: flex;
+  align-items: center;
   justify-content: center;
-  align-items: center;
-  position: relative;
-}
-
-.banner-icon {
-  font-size: 55px;
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
-}
-
-.badge {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
-  color: #FFF;
-  font-size: 10px;
-  padding: 4px 10px;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.card-body {
-  padding: 14px;
-  text-align: right;
-}
-
-.game-name {
-  font-family: 'Lalezar', cursive;
-  font-size: 24px;
-  color: #FFF;
-  margin-bottom: 2px;
-}
-
-.game-desc {
-  font-size: 12px;
-  color: #8B949E;
-  margin-bottom: 12px;
-}
-
-.play-now-btn {
-  width: 100%;
-  padding: 10px;
-  background: #238636;
-  border: none;
-  border-radius: 12px;
-  color: #FFF;
-  font-weight: 700;
-  font-size: 14px;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(35, 134, 54, 0.3);
-}
-
-/* کارت دوم قفل شده */
-.secondary-card {
   background: #161B22;
-  border-radius: 16px;
-  padding: 12px 16px;
+  padding: 20px;
+  border-radius: 20px;
+  border: 1px solid #30363D;
+  touch-action: manipulation;
+}
+
+.board-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  border: 1px solid #21262D;
-  opacity: 0.5;
 }
 
-.mini-icon {
-  width: 42px;
-  height: 42px;
-  background: #21262D;
-  border-radius: 12px;
+.dot {
+  width: 14px;
+  height: 14px;
+  background-color: #F0F6FC;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(240, 246, 252, 0.4);
+}
+
+.line {
+  background-color: #30363D;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.line.horizontal {
+  width: 50px;
+  height: 8px;
+  border-radius: 4px;
+}
+
+.line.vertical {
+  width: 8px;
+  height: 50px;
+  border-radius: 4px;
+}
+
+.line.drawn.p1 {
+  background-color: #38BDF8; /* رنگ آبی برای بازیکن */
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+}
+
+.line.drawn.p2 {
+  background-color: #F43F5E; /* رنگ قرمز برای ربات */
+  box-shadow: 0 0 10px rgba(244, 63, 94, 0.6);
+}
+
+.box {
+  width: 50px;
+  height: 50px;
   display: flex;
   justify-content: center;
   align-items: center;
   font-size: 20px;
-}
-
-.card-info {
-  flex: 1;
-  text-align: right;
-}
-
-.card-info h3 {
-  font-size: 15px;
-  color: #C9D1D9;
-}
-
-.card-info p {
-  font-size: 11px;
-  color: #8B949E;
-}
-
-.game-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.back-btn {
-  background: #161B22;
-  border: 1px solid #30363D;
-  color: #FFF;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  cursor: pointer;
+  font-weight: bold;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
 }
