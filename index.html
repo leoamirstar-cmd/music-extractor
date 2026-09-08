@@ -3,68 +3,66 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>هاب بازی‌های ایرانی</title>
+  <title>هاب بازی‌های پارسی</title>
   <link rel="stylesheet" href="style.css">
   
-  <!-- فونت‌های اصیل ایرانی (لاله‌زار و ناهید) -->
-  <link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+  <!-- فونت‌های پارسی -->
+  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lalezar&display=swap" rel="stylesheet">
   
-  <!-- کتابخانه آیکون FontAwesome -->
+  <!-- آیکون‌های FontAwesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <!-- کتابخانه انیمیشن حرفه‌ای GSAP -->
+  <!-- GSAP -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 </head>
 <body>
 
-  <!-- پس‌زمینه پویا با الگوی اسلیمی -->
-  <div class="pattern-bg"></div>
+  <!-- پس‌زمینه با نقش کاخ‌های پارسه / تخت جمشید -->
+  <div class="persepolis-bg"></div>
 
+  <!-- صفحه منوی اصلی -->
   <div id="main-menu" class="screen active">
     
-    <!-- هدر سنتی مدرن -->
     <header class="top-bar">
       <div class="user-profile">
         <div class="avatar-frame">
-          <i class="fa-solid fa-chess-knight avatar-icon"></i>
+          <i class="fa-solid fa-crown avatar-icon"></i>
         </div>
         <div class="user-info">
-          <span class="username">پهلوان جوان</span>
-          <span class="status"><i class="fa-solid fa-circle status-dot"></i> آماده بازی</span>
+          <span class="username">سرباز جاویدان</span>
+          <span class="status"><i class="fa-solid fa-shield-halved"></i> آماده نبرد</span>
         </div>
       </div>
       <div class="coin-badge">
-        <span>۱,۲۵۰</span> <i class="fa-solid fa-coins coin-icon"></i>
+        <span>۱,۲۵0</span> <i class="fa-solid fa-coins coin-icon"></i>
       </div>
     </header>
 
-    <h2 class="section-title">گذر بازی‌ها</h2>
+    <h2 class="section-title">گذرگاه پارسه</h2>
 
     <div class="games-container">
       
-      <!-- بنر اصلی نقطه و خط با طرح ایرانی -->
       <div class="featured-card" onclick="openGame('dots-boxes')">
         <div class="card-banner">
-          <div class="banner-pattern"></div>
-          <i class="fa-solid fa-pen-ruler banner-icon"></i>
-          <div class="badge">بازی اصلی</div>
+          <div class="farvahar-icon">🏛️</div>
+          <div class="badge">کلاسیک اصیل</div>
         </div>
         <div class="card-body">
-          <h3 class="game-name">نقطه و خط</h3>
-          <p class="game-desc">نبرد هوش و هوشمندی • رقابت با ربات</p>
+          <h3 class="game-name">نقطه و خط هخامنشی</h3>
+          <p class="game-desc">نبرد هوش و اندیشه • رقابت با هوش مصنوعی</p>
           <button class="play-now-btn">
-            <span>ورود به حجره بازی</span>
-            <i class="fa-solid fa-arrow-left"></i>
+            <span>ورود به تالار نبرد</span>
+            <i class="fa-solid fa-feather-pointed"></i>
           </button>
         </div>
       </div>
 
-      <!-- کارت‌های در دست ساخت -->
       <div class="secondary-card locked">
-        <div class="mini-icon"><i class="fa-solid fa-dice"></i></div>
+        <div class="mini-icon"><i class="fa-solid fa-scroll"></i></div>
         <div class="card-info">
-          <h3>تخته و منچ</h3>
-          <p>در حال آماده‌سازی...</p>
+          <h3>تخته‌نرد کوروش</h3>
+          <p>در حال ساخت در تالار...</p>
         </div>
         <i class="fa-solid fa-lock lock-icon"></i>
       </div>
@@ -72,15 +70,13 @@
     </div>
   </div>
 
-  <!-- صفحه اصلی بازی -->
+  <!-- صفحه بازی -->
   <div id="game-screen" class="screen">
     <header class="game-header">
-      <button class="back-btn" onclick="showMenu()"><i class="fa-solid fa-right-from-bracket"></i></button>
+      <button class="back-btn" onclick="showMenu()"><i class="fa-solid fa-arrow-right"></i></button>
       <h2 id="game-title">نقطه و خط</h2>
     </header>
-    <div id="board-container">
-      <p>در حال بارگذاری تخته...</p>
-    </div>
+    <div id="board-container"></div>
   </div>
 
   <script src="menu.js"></script>
