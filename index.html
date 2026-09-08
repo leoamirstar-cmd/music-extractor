@@ -3,26 +3,64 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>هاب بازی</title>
+  <title>Game Hub</title>
   <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;900&display=swap" rel="stylesheet">
 </head>
 <body>
 
-  <!-- بخش منوی اصلی -->
+  <!-- هدر بالای منو -->
   <div id="main-menu" class="screen active">
-    <h1>مجموعه بازی‌ها</h1>
-    <div class="menu-buttons">
-      <button onclick="openGame('dots-boxes')">بازی نقطه و خط</button>
-      <button disabled class="coming-soon">بازی جدید (به‌زودی)</button>
+    <header class="top-bar">
+      <div class="user-profile">
+        <div class="avatar">🎮</div>
+        <div class="user-info">
+          <span class="username">بازیکن جدید</span>
+          <span class="status">آفلاین</span>
+        </div>
+      </div>
+    </header>
+
+    <h2 class="section-title">بازی‌ها</h2>
+
+    <!-- لیست بازی‌ها به سبک پلاتو -->
+    <div class="games-grid">
+      
+      <!-- کارت بازی نقطه و خط -->
+      <div class="game-card" onclick="openGame('dots-boxes')">
+        <div class="card-icon" style="background: linear-gradient(135deg, #FF6B6B, #FF8E53);">
+          ✏️
+        </div>
+        <div class="card-details">
+          <h3>نقطه و خط</h3>
+          <p>کلاسیک و فکری • ۲ نفره</p>
+        </div>
+        <div class="play-btn">بازی</div>
+      </div>
+
+      <!-- کارت بازی به‌زودی -->
+      <div class="game-card locked">
+        <div class="card-icon" style="background: linear-gradient(135deg, #4A00E0, #8E2DE2);">
+          🎲
+        </div>
+        <div class="card-details">
+          <h3>منچ یا دوز</h3>
+          <p>به‌زودی اضافه می‌شود...</p>
+        </div>
+        <div class="lock-icon">🔒</div>
+      </div>
+
     </div>
   </div>
 
-  <!-- بخش بازی نقطه و خط -->
+  <!-- صفحه بازی -->
   <div id="game-screen" class="screen">
-    <button class="back-btn" onclick="showMenu()">← بازگشت به منو</button>
-    <h2>نقطه و خط</h2>
+    <header class="game-header">
+      <button class="back-btn" onclick="showMenu()">✕</button>
+      <h2 id="game-title">نقطه و خط</h2>
+    </header>
     <div id="board-container">
-      <p>در حال آماده‌سازی تخته بازی...</p>
+      <p>در حال بارگذاری تخته...</p>
     </div>
   </div>
 
@@ -30,4 +68,3 @@
   <script src="dots_boxes.js"></script>
 </body>
 </html>
-
