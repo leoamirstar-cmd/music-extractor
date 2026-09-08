@@ -1,4 +1,210 @@
-/* استایل‌های تخته بازی نقطه و خط */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Vazirmatn', sans-serif;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: #0B0E14;
+  color: #F8FAFC;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+}
+
+.screen {
+  display: none;
+  width: 100%;
+  max-width: 400px;
+  padding: 16px;
+}
+
+.screen.active {
+  display: block;
+}
+
+/* هدر و پروفایل */
+.top-bar {
+  background: #161B22;
+  border: 1px solid #21262D;
+  padding: 10px 14px;
+  border-radius: 14px;
+  margin-bottom: 20px;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar {
+  width: 38px;
+  height: 38px;
+  background: linear-gradient(135deg, #6366F1, #A855F7);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 18px;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+}
+
+.username {
+  font-size: 14px;
+  font-weight: 700;
+  color: #F1F5F9;
+}
+
+.status {
+  font-size: 11px;
+  color: #8B949E;
+}
+
+.section-title {
+  font-family: 'Lalezar', cursive;
+  text-align: right;
+  font-size: 22px;
+  color: #58A6FF;
+  margin-bottom: 12px;
+}
+
+/* کارت‌های منو */
+.games-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.featured-card {
+  background: #161B22;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid #30363D;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+}
+
+.featured-card:active {
+  transform: scale(0.98);
+}
+
+.card-banner {
+  height: 110px;
+  background: linear-gradient(135deg, #FF512F, #DD2476);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.banner-icon {
+  font-size: 55px;
+}
+
+.badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.4);
+  color: #FFF;
+  font-size: 10px;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.card-body {
+  padding: 14px;
+  text-align: right;
+}
+
+.game-name {
+  font-family: 'Lalezar', cursive;
+  font-size: 24px;
+  color: #FFF;
+}
+
+.game-desc {
+  font-size: 12px;
+  color: #8B949E;
+  margin-bottom: 12px;
+}
+
+.play-now-btn {
+  width: 100%;
+  padding: 10px;
+  background: #238636;
+  border: none;
+  border-radius: 12px;
+  color: #FFF;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.secondary-card {
+  background: #161B22;
+  border-radius: 16px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #21262D;
+  opacity: 0.5;
+}
+
+.mini-icon {
+  width: 42px;
+  height: 42px;
+  background: #21262D;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 20px;
+}
+
+.card-info {
+  flex: 1;
+  text-align: right;
+}
+
+.card-info h3 {
+  font-size: 15px;
+  color: #C9D1D9;
+}
+
+.card-info p {
+  font-size: 11px;
+  color: #8B949E;
+}
+
+/* صفحه بازی */
+.game-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.back-btn {
+  background: #161B22;
+  border: 1px solid #30363D;
+  color: #FFF;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
 .game-status {
   display: flex;
   justify-content: space-between;
@@ -7,7 +213,7 @@
   padding: 12px 16px;
   border-radius: 16px;
   border: 1px solid #30363D;
-  margin-bottom: 25px;
+  margin-bottom: 20px;
 }
 
 .player-score {
@@ -17,7 +223,7 @@
   padding: 6px 14px;
   border-radius: 10px;
   background: #21262D;
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
 .player-score.active {
@@ -41,17 +247,14 @@
   color: #58A6FF;
 }
 
-/* تخته اصلی */
 #dots-board {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   background: #161B22;
   padding: 20px;
   border-radius: 20px;
   border: 1px solid #30363D;
-  touch-action: manipulation;
 }
 
 .board-row {
@@ -70,7 +273,6 @@
 .line {
   background-color: #30363D;
   cursor: pointer;
-  transition: background-color 0.2s ease;
 }
 
 .line.horizontal {
@@ -86,12 +288,12 @@
 }
 
 .line.drawn.p1 {
-  background-color: #38BDF8; /* رنگ آبی برای بازیکن */
+  background-color: #38BDF8;
   box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
 }
 
 .line.drawn.p2 {
-  background-color: #F43F5E; /* رنگ قرمز برای ربات */
+  background-color: #F43F5E;
   box-shadow: 0 0 10px rgba(244, 63, 94, 0.6);
 }
 
@@ -103,6 +305,7 @@
   align-items: center;
   font-size: 20px;
   font-weight: bold;
-  border-radius: 8px;
-  transition: background-color 0.3s ease;
 }
+
+.box.p1::after { content: '👤'; font-size: 22px; }
+.box.p2::after { content: '🤖'; font-size: 22px; }
