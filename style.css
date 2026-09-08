@@ -8,27 +8,23 @@
 }
 
 body {
-  background-color: #070B12;
-  color: #F8FAFC;
+  background-color: #0c0a09;
+  color: #f5f5f4;
   display: flex;
   justify-content: center;
   align-items: flex-start;
   min-height: 100vh;
   overflow-x: hidden;
-  position: relative;
 }
 
-/* الگوی اسلیمی پس‌زمینه */
-.pattern-bg {
+/* پس‌زمینه با طرح طلایی و ستون‌های تخت جمشید */
+.persepolis-bg {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-image: radial-gradient(#14B8A6 0.75px, transparent 0.75px), radial-gradient(#0F766E 0.75px, #070B12 0.75px);
-  background-size: 30px 30px;
-  background-position: 0 0, 15px 15px;
-  opacity: 0.15;
+  background: radial-gradient(circle at top, #292524 0%, #0c0a09 100%);
   z-index: -1;
 }
 
@@ -43,18 +39,17 @@ body {
   display: block;
 }
 
-/* پروفایل و هدر سنتی */
+/* هدر هخامنشی */
 .top-bar {
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(12px);
-  border: 1px solid #1D4ED833;
+  background: #1c1917;
+  border: 1px solid #78350f;
   padding: 10px 14px;
   border-radius: 18px;
   margin-bottom: 22px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 20px rgba(180, 83, 9, 0.15);
 }
 
 .user-profile {
@@ -66,18 +61,18 @@ body {
 .avatar-frame {
   width: 42px;
   height: 42px;
-  background: linear-gradient(135deg, #0D9488, #0284C7);
+  background: linear-gradient(135deg, #b45309, #d97706);
   border-radius: 14px;
   display: flex;
   justify-content: center;
   align-items: center;
-  border: 1px solid #5EEAD4;
-  box-shadow: 0 0 12px rgba(13, 148, 136, 0.4);
+  border: 1px solid #fde047;
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.3);
 }
 
 .avatar-icon {
   font-size: 20px;
-  color: #FFF;
+  color: #fff;
 }
 
 .user-info {
@@ -89,25 +84,21 @@ body {
 .username {
   font-size: 14px;
   font-weight: 700;
-  color: #F1F5F9;
+  color: #fef08a;
 }
 
 .status {
   font-size: 11px;
-  color: #10B981;
+  color: #a8a29e;
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
-.status-dot {
-  font-size: 8px;
-}
-
 .coin-badge {
-  background: #1E293B;
-  border: 1px solid #F59E0B55;
-  color: #FBBF24;
+  background: #292524;
+  border: 1px solid #d97706;
+  color: #fbbf24;
   padding: 6px 12px;
   border-radius: 20px;
   font-size: 13px;
@@ -121,12 +112,12 @@ body {
   font-family: 'Lalezar', cursive;
   text-align: right;
   font-size: 24px;
-  color: #2DD4BF;
+  color: #fbbf24;
   margin-bottom: 14px;
-  text-shadow: 0 2px 10px rgba(45, 212, 191, 0.2);
+  text-shadow: 0 2px 8px rgba(217, 119, 6, 0.3);
 }
 
-/* بنر بزرگ سنتی (کارت فیروزه‌ای) */
+/* کارت اصلی طلایی و سنگی */
 .games-container {
   display: flex;
   flex-direction: column;
@@ -134,44 +125,39 @@ body {
 }
 
 .featured-card {
-  background: #0F172A;
+  background: #1c1917;
   border-radius: 24px;
   overflow: hidden;
-  border: 1px solid #14B8A644;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+  border: 1px solid #b45309;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
   cursor: pointer;
-  position: relative;
 }
 
 .card-banner {
   height: 120px;
-  background: linear-gradient(135deg, #0F766E, #0284C7);
+  background: linear-gradient(135deg, #78350f, #451a03);
   display: flex;
   justify-content: center;
   align-items: center;
   position: relative;
-  overflow: hidden;
+  border-bottom: 2px solid #b45309;
 }
 
-.banner-icon {
-  font-size: 55px;
-  color: rgba(255, 255, 255, 0.9);
-  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.3));
-  z-index: 2;
+.farvahar-icon {
+  font-size: 60px;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));
 }
 
 .badge {
   position: absolute;
   top: 12px;
   right: 12px;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(6px);
-  color: #5EEAD4;
+  background: rgba(12, 10, 9, 0.7);
+  color: #fde047;
   font-size: 11px;
   padding: 4px 12px;
   border-radius: 20px;
-  border: 1px solid #5EEAD444;
-  z-index: 2;
+  border: 1px solid #b45309;
 }
 
 .card-body {
@@ -181,53 +167,53 @@ body {
 
 .game-name {
   font-family: 'Lalezar', cursive;
-  font-size: 26px;
-  color: #FFF;
+  font-size: 25px;
+  color: #fef08a;
 }
 
 .game-desc {
   font-size: 12px;
-  color: #94A3B8;
+  color: #a8a29e;
   margin-bottom: 14px;
 }
 
 .play-now-btn {
   width: 100%;
   padding: 12px;
-  background: linear-gradient(135deg, #0D9488, #059669);
-  border: none;
+  background: linear-gradient(135deg, #b45309, #78350f);
+  border: 1px solid #fde047;
   border-radius: 14px;
-  color: #FFF;
+  color: #fff;
   font-weight: 700;
   font-size: 15px;
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 10px;
-  box-shadow: 0 4px 15px rgba(13, 148, 136, 0.4);
+  box-shadow: 0 4px 12px rgba(180, 83, 9, 0.4);
 }
 
 .secondary-card {
-  background: #0F172A;
+  background: #1c1917;
   border-radius: 18px;
   padding: 14px 16px;
   display: flex;
   align-items: center;
   gap: 14px;
-  border: 1px solid #1E293B;
+  border: 1px solid #44403c;
   opacity: 0.5;
 }
 
 .mini-icon {
   width: 44px;
   height: 44px;
-  background: #1E293B;
+  background: #292524;
   border-radius: 14px;
   display: flex;
   justify-content: center;
   align-items: center;
   font-size: 20px;
-  color: #94A3B8;
+  color: #a8a29e;
 }
 
 .card-info {
@@ -235,24 +221,136 @@ body {
   text-align: right;
 }
 
-.card-info h3 { font-size: 16px; color: #E2E8F0; }
-.card-info p { font-size: 12px; color: #64748B; }
+.card-info h3 { font-size: 15px; color: #e7e5e4; }
+.card-info p { font-size: 11px; color: #78716c; }
 
-/* استایل‌های صفحه بازی */
+/* استایل صفحه بازی و تخته */
 .game-header {
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: space-between;
   margin-bottom: 20px;
 }
 
+.game-header h2 {
+  font-family: 'Lalezar', cursive;
+  font-size: 24px;
+  color: #fbbf24;
+}
+
 .back-btn {
-  background: #0F172A;
-  border: 1px solid #1E293B;
-  color: #FFF;
+  background: #1c1917;
+  border: 1px solid #78350f;
+  color: #fbbf24;
   width: 40px;
   height: 40px;
   border-radius: 12px;
   cursor: pointer;
   font-size: 16px;
 }
+
+.game-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #1c1917;
+  padding: 12px 16px;
+  border-radius: 18px;
+  border: 1px solid #78350f;
+  margin-bottom: 20px;
+}
+
+.player-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 12px;
+  background: #292524;
+  opacity: 0.5;
+}
+
+.player-score.active {
+  opacity: 1;
+  border: 1px solid #fde047;
+  background: #451a03;
+}
+
+.player-score span {
+  font-size: 11px;
+  color: #a8a29e;
+}
+
+.player-score strong {
+  font-size: 18px;
+  color: #fff;
+}
+
+.turn-indicator {
+  font-size: 13px;
+  font-weight: bold;
+  color: #fbbf24;
+}
+
+#dots-board {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #1c1917;
+  padding: 24px 12px;
+  border-radius: 24px;
+  border: 1px solid #b45309;
+  box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
+}
+
+.board-row {
+  display: flex;
+  align-items: center;
+}
+
+.dot {
+  width: 14px;
+  height: 14px;
+  background-color: #fde047;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(253, 224, 71, 0.8);
+}
+
+.line {
+  background-color: #44403c;
+  cursor: pointer;
+}
+
+.line.horizontal {
+  width: 50px;
+  height: 10px;
+  border-radius: 5px;
+}
+
+.line.vertical {
+  width: 10px;
+  height: 50px;
+  border-radius: 5px;
+}
+
+.line.drawn.p1 {
+  background-color: #eab308;
+  box-shadow: 0 0 10px rgba(234, 179, 8, 0.8);
+}
+
+.line.drawn.p2 {
+  background-color: #dc2626;
+  box-shadow: 0 0 10px rgba(220, 38, 38, 0.8);
+}
+
+.box {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.box.p1::after { content: '👑'; font-size: 20px; }
+.box.p2::after { content: '🦁'; font-size: 20px; }
