@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>هاب بازی</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- بخش منوی اصلی -->
+  <div id="main-menu" class="screen active">
+    <h1>مجموعه بازی‌ها</h1>
+    <div class="menu-buttons">
+      <button onclick="openGame('dots-boxes')">بازی نقطه و خط</button>
+      <button disabled class="coming-soon">بازی جدید (به‌زودی)</button>
+    </div>
+  </div>
+
+  <!-- بخش بازی نقطه و خط -->
+  <div id="game-screen" class="screen">
+    <button class="back-btn" onclick="showMenu()">← بازگشت به منو</button>
+    <h2>نقطه و خط</h2>
+    <div id="board-container">
+      <p>در حال آماده‌سازی تخته بازی...</p>
+    </div>
+  </div>
+
+  <script src="menu.js"></script>
+  <script src="dots_boxes.js"></script>
+</body>
+</html>
+
