@@ -5,12 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Game Hub</title>
   <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;900&display=swap" rel="stylesheet">
+  <!-- اضافه کردن فونت‌های زیبا -->
+  <link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-  <!-- هدر بالای منو -->
   <div id="main-menu" class="screen active">
+    
+    <!-- پروفایل بالا -->
     <header class="top-bar">
       <div class="user-profile">
         <div class="avatar">🎮</div>
@@ -21,39 +23,38 @@
       </div>
     </header>
 
-    <h2 class="section-title">بازی‌ها</h2>
+    <h2 class="section-title">انتخاب بازی</h2>
 
-    <!-- لیست بازی‌ها به سبک پلاتو -->
-    <div class="games-grid">
+    <!-- شبکه‌بندی بازی‌ها (سبک کارت‌های بزرگ پلاتو) -->
+    <div class="games-container">
       
-      <!-- کارت بازی نقطه و خط -->
-      <div class="game-card" onclick="openGame('dots-boxes')">
-        <div class="card-icon" style="background: linear-gradient(135deg, #FF6B6B, #FF8E53);">
-          ✏️
+      <!-- بنر اصلی بازی نقطه و خط -->
+      <div class="featured-card" onclick="openGame('dots-boxes')">
+        <div class="card-banner">
+          <div class="banner-icon">✏️</div>
+          <div class="badge">محبوب</div>
         </div>
-        <div class="card-details">
-          <h3>نقطه و خط</h3>
-          <p>کلاسیک و فکری • ۲ نفره</p>
+        <div class="card-body">
+          <h3 class="game-name">نقطه و خط</h3>
+          <p class="game-desc">بازی فکری ۲ نفره • رقابت با ربات</p>
+          <button class="play-now-btn">شروع بازی</button>
         </div>
-        <div class="play-btn">بازی</div>
       </div>
 
-      <!-- کارت بازی به‌زودی -->
-      <div class="game-card locked">
-        <div class="card-icon" style="background: linear-gradient(135deg, #4A00E0, #8E2DE2);">
-          🎲
+      <!-- کارت بازی‌های بعدی (قفل شده) -->
+      <div class="secondary-card locked">
+        <div class="mini-icon">🎲</div>
+        <div class="card-info">
+          <h3>منچ و دوز</h3>
+          <p>به‌زودی...</p>
         </div>
-        <div class="card-details">
-          <h3>منچ یا دوز</h3>
-          <p>به‌زودی اضافه می‌شود...</p>
-        </div>
-        <div class="lock-icon">🔒</div>
+        <span class="lock">🔒</span>
       </div>
 
     </div>
   </div>
 
-  <!-- صفحه بازی -->
+  <!-- صفحه اصلی بازی -->
   <div id="game-screen" class="screen">
     <header class="game-header">
       <button class="back-btn" onclick="showMenu()">✕</button>
